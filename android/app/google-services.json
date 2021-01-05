@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "306870820779",
+    "firebase_url": "https://fanny-9a7c3.firebaseio.com",
+    "project_id": "fanny-9a7c3",
+    "storage_bucket": "fanny-9a7c3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:306870820779:android:58b0a07651e6e7d4423cee",
+        "android_client_info": {
+          "package_name": "com.example.fanny_cliente"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "306870820779-l8eje3dsegnu65m94qfvfiant8nq02qu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.fanny_cliente",
+            "certificate_hash": "1520e33b53b4b0e5ffe88724452be36b8b644cf1"
+          }
+        },
+        {
+          "client_id": "306870820779-i04kg01gtn71a3vsgbc4ps493r6jhgv3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXURm9fFOQkGB1ft7L9hybjCh3dW-5REY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "306870820779-i04kg01gtn71a3vsgbc4ps493r6jhgv3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
