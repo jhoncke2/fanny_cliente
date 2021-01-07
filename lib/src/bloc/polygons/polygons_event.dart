@@ -10,9 +10,9 @@ class AddPolygons extends PolygonsEvent{
   });
 }
 
-class DefineIfWeAreOnAnyPolygon extends PolygonsEvent{
+class DefineIfPositionIsOnAnyPolygon extends PolygonsEvent{
   final LatLng position;
-  DefineIfWeAreOnAnyPolygon({
+  DefineIfPositionIsOnAnyPolygon({
     @required this.position
   });
 }

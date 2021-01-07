@@ -2,28 +2,28 @@ part of 'user_bloc.dart';
 
 @immutable
 class UserState {
-  final UsuarioModel userInformation;
   final String authorizationToken;
+  final UsuarioModel userInformation;
   final String mobileToken;
   UserState({
-    UsuarioModel userInformation,
     String authorizationToken,
+    UsuarioModel userInformation,
     String mobileToken
   })
-  : this.userInformation = userInformation??null,
-    this.authorizationToken = authorizationToken??null,
+  : this.authorizationToken = authorizationToken??null,
+    this.userInformation = userInformation??null,
     this.mobileToken = mobileToken??null
   ;
 
-  UserState reset() => UserState();
-
   UserState copyWith({
-    UsuarioModel userInformation,
     String authorizationToken,
+    UsuarioModel userInformation,
     String mobileToken
   }) => UserState(
-    userInformation: userInformation??null,
-    authorizationToken: authorizationToken??null,
-    mobileToken: mobileToken??null
+    authorizationToken: authorizationToken??this.authorizationToken,
+    userInformation: userInformation??this.userInformation,
+    mobileToken: mobileToken??this.mobileToken
   );
+
+  UserState reset() => UserState();
 }

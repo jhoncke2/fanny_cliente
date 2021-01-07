@@ -1,14 +1,17 @@
 import 'dart:math';
 
+import 'package:fanny_cliente/src/bloc/assertions_for_blocs/lugares_services_manager_assertions.dart';
+import 'package:fanny_cliente/src/pages/direccion_create_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:fanny_cliente/src/errors/services/service_status_err.dart';
 import 'package:fanny_cliente/src/models/lugares_model.dart';
-
 import 'package:fanny_cliente/src/bloc/lugares/lugares_bloc.dart';
 import 'package:fanny_cliente/src/bloc/user/user_bloc.dart';
 import 'package:fanny_cliente/src/services/lugares_service.dart';
+import 'package:fanny_cliente/src/utils/shared_preferences.dart';
+
 
 class LugaresServicesManager{
 
@@ -27,7 +30,8 @@ class LugaresServicesManager{
     if(_lSManager._appContext == null){
       _lSManager.._appContext = appContext
       .._userBloc = BlocProvider.of<UserBloc>(appContext)
-      .._lugaresBloc = BlocProvider.of<LugaresBloc>(appContext);
+      .._lugaresBloc = BlocProvider.of<LugaresBloc>(appContext)
+      .._asserter = LugaresServicesManagerAssertions(lugaresBloc: _lSManager._lugaresBloc);
     }
   }
 
@@ -44,11 +48,13 @@ class LugaresServicesManager{
     if(_lSManager._appContext == null){
       _lSManager.._appContext = appContext
       .._userBloc = userBloc
-      .._lugaresBloc = lugaresBloc;
+      .._lugaresBloc = lugaresBloc
+      .._asserter = LugaresServicesManagerAssertions(lugaresBloc: _lSManager._lugaresBloc);
     }
   }
 
   // ************** fin de diseño Singleton
+  LugaresServicesManagerAssertions _asserter;
 
   BuildContext _appContext;
   LugaresBloc _lugaresBloc;
@@ -59,10 +65,8 @@ class LugaresServicesManager{
     final Map<String, dynamic> body = newLugar.toJson();
     final Map<String, dynamic> response = await lugaresService.crearLugar(headers, body);
     await loadLugares();
-    _assertsCreateLugar(response);
+    _asserter.assertsCreateLugar(response);
   }
-
-  
 
   Future<void> loadLugares()async{
     final Map<String, String> headers = _createAuthorizationTokenHeaders();
@@ -71,28 +75,32 @@ class LugaresServicesManager{
     final List<LugarModel> lugares = LugaresModel.fromJsonList(lugaresMap).lugares;
     final SetLugares setLugaresEvent = SetLugares(lugares: lugares);
     _lugaresBloc.add(setLugaresEvent);
-    _assertsLoadLugares();
+    _asserter.assertsLoadLugares();
   }
 
-  //TODO: probar
-  Future<void> validateCurrentNewCacheLugar(LugarModel currentNewLugarInCache)async{
+  Future<void> validateCurrentNewCacheLugar()async{
+    final LugarModel currentNewLugarInCache = sharedPreferencesUtils.getLugarTemporalInicial();
+    if(currentNewLugarInCache == null)
+      return;
     final List<LugarModel> lugares = _lugaresBloc.state.lugares;
-    bool thereIsOneWithSameAddress = false;
+    bool thereIsOneWithTheSameAddress = false;
     for(int i = 0; i < lugares.length; i++){
       final LugarModel lugar = lugares[i];
       if(lugar.direccion == currentNewLugarInCache.direccion){
+        thereIsOneWithTheSameAddress = true;
         if(!lugar.elegido)
           await elegirLugar(lugar);
         if(!_defineIfPositionsAreAtTheSameTown(currentNewLugarInCache.latLng, lugar.latLng)){
           await changeLatLng(lugar.id, currentNewLugarInCache.latitud, currentNewLugarInCache.longitud);
         }
-        thereIsOneWithSameAddress = true;
         break;
       }
     }
-    if(!thereIsOneWithSameAddress){
-      createLugar(currentNewLugarInCache);
+    if(!thereIsOneWithTheSameAddress){
+      await createLugar(currentNewLugarInCache);
     }
+    sharedPreferencesUtils.deleteDireccionTemporalInicial();
+    await loadLugares();
   }
 
   /**
@@ -132,6 +140,8 @@ class LugaresServicesManager{
       final Map<String, String> headers = _createAuthorizationTokenHeaders();
       final int lugarId = lugar.id;
       final Map<String, dynamic> response = await lugaresService.elegirLugar(lugarId, headers);
+      await loadLugares();
+      _asserter.assertElegirLugar(response, lugar.id);
     }on ServiceStatusErr catch(err){
 
     }catch(err){
@@ -139,12 +149,12 @@ class LugaresServicesManager{
     }
   }
 
-  Future<void> changeLatLng(int lugarId, double newLatitude, double newLongitude)async{
+  Future<void> changeLatLng(int lugarId, double latitudeToChange, double longitudeToChange)async{
     try{
       final Map<String, String> headers = _createAuthorizationTokenHeaders();
       final Map<String, dynamic> body = {
-        'latitud': newLatitude,
-        'longitud': newLongitude
+        'latitud': latitudeToChange,
+        'longitud': longitudeToChange
       };
       final Map<String, dynamic> response = await lugaresService.changeLatLongOfLugar(lugarId, headers, body);
       await loadLugares();
@@ -155,29 +165,16 @@ class LugaresServicesManager{
     }
   }
 
+  void validarSiHayDirecciones(){
+    final List<LugarModel> lugares = _lugaresBloc.state.lugares;
+    if(lugares == null || lugares.length == 0)
+      Navigator.of(_appContext).pushReplacementNamed(DireccionCreatePage.route, arguments: TipoDireccion.CLIENTE_NUEVO); 
+  }
+
   Map<String, String> _createAuthorizationTokenHeaders(){
     final String authorizationToken = _userBloc.state.authorizationToken;
     return {
       'Authorization':'Bearer $authorizationToken'
     };
-  }
-
-  //*************************************************** */
-  //    For testing
-  //************************************************** */
-  void _assertsCreateLugar(Map<String, dynamic> serviceResponse){
-    final LugarModel recienCreado = LugarModel.fromJsonMap(serviceResponse['direccion']);
-    assert(recienCreado != null, 'el lugar del serviceResponse debe existir');
-    final LugarModel elegido = _lugaresBloc.state.elegido;
-    assert(elegido.id == recienCreado.id, 'La El lugar que aparece como recién creado en el bloc debe tener el id del lugar recién creado');
-  }
-
-  void _assertsLoadLugares(){
-    final List<LugarModel> lugares = _lugaresBloc.state.lugares;
-    final LugarModel elegido = _lugaresBloc.state.elegido;
-    assert(lugares!=null, 'Los lugares del bloc deben estar recién cargados');
-    assert(lugares.length > 0, 'Los lugares no deben estar vacíos');
-    assert(elegido != null, 'Debe existir un elegido en el bloc');
-    
   }
 }

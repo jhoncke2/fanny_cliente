@@ -105,6 +105,6 @@ class InitValidationPage extends StatelessWidget {
   void _doExtraInitialConfiguration(LatLng position){
     final Set<Polygon> polygons = testingPolygons.tiendaPolygons;
     _polygonsBloc.add(AddPolygons(polygons: polygons));
-    _polygonsBloc.add(DefineIfWeAreOnAnyPolygon(position: position));
+    _polygonsBloc.add(DefineIfPositionIsOnAnyPolygon(position: position));
   }
 }

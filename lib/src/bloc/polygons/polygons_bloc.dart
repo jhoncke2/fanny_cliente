@@ -21,8 +21,8 @@ class PolygonsBloc extends Bloc<PolygonsEvent, PolygonsState> {
         _addPolygons(event as AddPolygons);
         yield _currentNewState;
       break;
-      case DefineIfWeAreOnAnyPolygon:
-        _defineIfWeAreOnAnyPolygon(event as DefineIfWeAreOnAnyPolygon);
+      case DefineIfPositionIsOnAnyPolygon:
+        _defineIfWeAreOnAnyPolygon(event as DefineIfPositionIsOnAnyPolygon);
         yield _currentNewState;
       break;
     }
@@ -35,7 +35,7 @@ class PolygonsBloc extends Bloc<PolygonsEvent, PolygonsState> {
     );
   }
 
-  void _defineIfWeAreOnAnyPolygon(DefineIfWeAreOnAnyPolygon event){
+  void _defineIfWeAreOnAnyPolygon(DefineIfPositionIsOnAnyPolygon event){
     final List<Polygon> polygonsList = state.tiendaPolygons.toList();
     final bool estamosEnAlgunPolygon = polygonsManager.hallarSiPuntoEstaDentroDePolygons(polygonsList, event.position);
     _currentNewState = state.copyWith(estamosDentroDeAlgunPolygon: estamosEnAlgunPolygon);

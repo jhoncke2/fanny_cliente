@@ -1,7 +1,11 @@
+import 'package:mockito/mockito.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:fanny_cliente/src/bloc/lugares/lugares_bloc.dart';
+import 'package:fanny_cliente/src/bloc/polygons/polygons_bloc.dart';
 import 'package:fanny_cliente/src/bloc/user/user_bloc.dart';
 import 'package:fanny_cliente/src/models/lugares_model.dart';
-import 'package:mockito/mockito.dart';
+import 'package:fanny_cliente/src/utils/polygons_manager.dart' as polygonsManager;
+
 
 class MockUserBloc extends Mock implements UserBloc{
   UserState _mockState;
@@ -61,7 +65,8 @@ class MockLugaresBloc extends Mock implements LugaresBloc{
       break;
     }
   }
-  
+
+  @override  
   void _setLugares(SetLugares event){
     final List<LugarModel> lugares = event.lugares;
     LugarModel elegido;
@@ -75,10 +80,51 @@ class MockLugaresBloc extends Mock implements LugaresBloc{
     _mockState = _mockState.copyWith(lugaresCargados:true, lugares: lugares, elegido: elegido);
   }
 
+  @override
   void _resetLugares(){
     _mockState = _mockState.reset();
   }
 
   @override
   LugaresState get state => this._mockState;
+}
+
+
+class MockPolygonsBloc extends Mock implements PolygonsBloc{
+  PolygonsState _mockState;
+  MockPolygonsBloc() 
+  : super(){
+    _mockState = PolygonsState();
+  }
+
+  @override
+  void add(PolygonsEvent event) {
+    switch(event.runtimeType){
+      case AddPolygons:
+        _addPolygons(event as AddPolygons);
+      break;
+      case DefineIfPositionIsOnAnyPolygon:
+        _defineIfWeAreOnAnyPolygon(event as DefineIfPositionIsOnAnyPolygon);
+      break;
+    }
+  }
+
+  @override
+  void _addPolygons(AddPolygons event){
+    _mockState = state.copyWith(
+      tiendaPolygonsCargados: true,
+      tiendaPolygons: event.polygons
+    );
+  }  
+
+
+  @override
+  void _defineIfWeAreOnAnyPolygon(DefineIfPositionIsOnAnyPolygon event){
+    final List<Polygon> polygonsList = state.tiendaPolygons.toList();
+    final bool estamosEnAlgunPolygon = polygonsManager.hallarSiPuntoEstaDentroDePolygons(polygonsList, event.position);
+    _mockState = state.copyWith(estamosDentroDeAlgunPolygon: estamosEnAlgunPolygon);
+  }
+
+  @override
+  PolygonsState get state => this._mockState;
 }

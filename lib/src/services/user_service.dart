@@ -1,3 +1,4 @@
+import 'package:fanny_cliente/src/errors/services/service_status_err.dart';
 import 'package:fanny_cliente/src/services/basic_service.dart';
 
 class UserService extends BasicService{

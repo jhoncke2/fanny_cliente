@@ -121,7 +121,7 @@ class LugaresPopUpState extends State<LugaresPopUp> {
     LugarModel elegido = widget._snapshot.data[index];
     await lugaresBloc.elegirLugar(elegido.id, widget._authorizationToken);
     final PolygonsBloc polygonsBloc = BlocProvider.of<PolygonsBloc>(context);
-    polygonsBloc.add(DefineIfWeAreOnAnyPolygon(position: lugaresBloc.actualElegido.latLng));
+    polygonsBloc.add(DefineIfPositionIsOnAnyPolygon(position: lugaresBloc.actualElegido.latLng));
     setState(() {
 
     });

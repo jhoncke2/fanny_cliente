@@ -45,8 +45,8 @@ class LugarModel{
   });
 
   LugarModel.fromJsonMap(Map<String, dynamic> jsonObject){
-    id                            = jsonObject['id'];
     //el .toString() es porque no sé si viene en formato double o String, creo que difiere dependiendo del tipo de petición
+    id                            = int.parse(jsonObject['id'].toString());
     latitud                       = double.parse( jsonObject['latitud'].toString() );
     longitud                      = double.parse( jsonObject['longitud'].toString() );
     direccion                     = jsonObject['direccion'];

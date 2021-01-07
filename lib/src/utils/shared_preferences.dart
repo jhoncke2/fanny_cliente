@@ -8,7 +8,6 @@ class SharedPreferencesUtils{
 
   Future<void> initSharedPreferences()async{
     sharedPreferences = await SharedPreferences.getInstance();
-    print('shared preferences inicializadas: $sharedPreferences');
   }
 
   Future<bool> logOut()async{
@@ -23,7 +22,7 @@ class SharedPreferencesUtils{
     }
   }
 
-  Future<bool> normalLogIn(String loginEmail, String loginPassword)async{
+  Future<bool> normalLogin(String loginEmail, String loginPassword)async{
     try{
       await sharedPreferences.setString('login_tipo', 'normal');
       await sharedPreferences.setString('login_email', loginEmail);
@@ -44,7 +43,7 @@ class SharedPreferencesUtils{
     }
   }
 
-  Map<String, dynamic> getActualLoginCredentials(){
+  Map<String, dynamic> getCurrentLoginCredentials(){
     Map<String, dynamic> credentials = {};
     credentials['tipo'] = sharedPreferences.getString('login_tipo');
     credentials['email'] = sharedPreferences.getString('login_email');
@@ -52,10 +51,41 @@ class SharedPreferencesUtils{
     return credentials;
   }
 
-  Future<bool> setDireccionTemporal(LugarModel direccionTemporalInicial)async{
+  Future<bool> setLugarTemporal(LugarModel direccionTemporalInicial)async{
     try{
       Map<String, dynamic> direccionTemporalInicialJson = direccionTemporalInicial.toJson();
       await sharedPreferences.setString('direccion_temporal_inicial', json.encode(direccionTemporalInicialJson));
+      return true;
+    }catch(err){
+      return false;
+    }
+  }
+
+  LugarModel getLugarTemporalInicial(){
+    String direccionTemporalInicialString = sharedPreferences.getString('direccion_temporal_inicial');
+    if(direccionTemporalInicialString != null){
+      Map<String, dynamic> lugarTemporalInicialJson = json.decode(direccionTemporalInicialString);
+      final LugarModel lugarTemporalInicial = LugarModel.fromJsonMap(lugarTemporalInicialJson);
+      /*
+      LugarModel direccionTemporalInicial = LugarModel(
+        direccion: direccionTemporalInicialJson['direccion'],
+        latitud: double.parse( direccionTemporalInicialJson['latitud']),
+        longitud:double.parse( direccionTemporalInicialJson['longitud']),
+        elegido: true,
+        pais: direccionTemporalInicialJson['pais'],
+        ciudad: direccionTemporalInicialJson['ciudad'],
+        observaciones: direccionTemporalInicialJson['observaciones'],
+        tipo: direccionTemporalInicialJson['tipo']
+      );
+      */
+      return lugarTemporalInicial;
+    }
+    return null;
+  }
+
+  bool deleteDireccionTemporalInicial(){
+    try{
+      sharedPreferences.remove('direccion_temporal_inicial');
       return true;
     }catch(err){
       return false;
@@ -87,34 +117,6 @@ class SharedPreferencesUtils{
       return productosPedido;
     }catch(err){
       return null;
-    }
-  }
-
-  LugarModel getDireccionTemporalInicial(){
-    String direccionTemporalInicialString = sharedPreferences.getString('direccion_temporal_inicial');
-    if(direccionTemporalInicialString != null){
-      Map<String, dynamic> direccionTemporalInicialJson = json.decode(direccionTemporalInicialString);
-      print('direccion temporal inicial json: $direccionTemporalInicialJson');
-      LugarModel direccionTemporalInicial = LugarModel(
-        direccion: direccionTemporalInicialJson['direccion'],
-        latitud: double.parse( direccionTemporalInicialJson['latitud']),
-        longitud:double.parse( direccionTemporalInicialJson['longitud']),
-        elegido: true,
-        pais: direccionTemporalInicialJson['pais'],
-        ciudad: direccionTemporalInicialJson['ciudad'],
-        observaciones: direccionTemporalInicialJson['observaciones']
-      );
-      return direccionTemporalInicial;
-    }
-    return null;
-  }
-
-  bool deleteDireccionTemporalInicial(){
-    try{
-      sharedPreferences.remove('direccion_temporal_inicial');
-      return true;
-    }catch(err){
-      return false;
     }
   }
 }
