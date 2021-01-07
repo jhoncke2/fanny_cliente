@@ -258,3 +258,4 @@ Future<void> _loadLugares()async{
 void _updateCurrentLocalLugares(){
   _lugaresCargados = _lugaresBloc.state.lugares;
 }
+

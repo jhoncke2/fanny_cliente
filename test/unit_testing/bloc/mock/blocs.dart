@@ -1,3 +1,6 @@
+import 'package:fanny_cliente/src/bloc/products/products_bloc.dart';
+import 'package:fanny_cliente/src/models/categorias_model.dart';
+import 'package:fanny_cliente/src/models/productos_model.dart';
 import 'package:mockito/mockito.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:fanny_cliente/src/bloc/lugares/lugares_bloc.dart';
@@ -127,4 +130,67 @@ class MockPolygonsBloc extends Mock implements PolygonsBloc{
 
   @override
   PolygonsState get state => this._mockState;
+}
+
+class MockProductosBloc extends Mock implements ProductsBloc{
+  ProductsState _mockState;
+  MockProductosBloc() 
+  : super(){
+    _mockState = ProductsState();
+  }
+  @override
+  void add(ProductsEvent event) {
+    switch(event.runtimeType){
+      case SetCategories:
+        _setCategories(event as SetCategories);
+      break;
+      case SetProducts:
+        _setProducts(event as SetProducts);
+      break;
+      case SelectProduct:
+        _elegirProducto(event as SelectProduct);
+      break;
+      case SetProductsByCategory:
+        _setProductsByCategory(event as SetProductsByCategory);
+      break;
+      case SetProductsBySearch:
+        _setProductsBySearch(event as SetProductsBySearch);
+      break;
+    }
+  }
+
+  @override
+  void _setCategories(SetCategories event){
+    final List<CategoriaModel> categories = event.categories;
+    _mockState = state.copyWith(categories: categories);
+  }
+
+  @override  
+  void _setProducts(SetProducts event){
+    final List<ProductoModel> products = event.products;
+    _mockState = _mockState.copyWith(products: products);
+  }
+
+   @override  
+  void _elegirProducto(SelectProduct event){
+    final ProductoModel selected = event.selected;
+    _mockState = _mockState.copyWith(currentSelectedProduct: selected);
+  }
+
+  @override
+  void _setProductsByCategory(SetProductsByCategory event){
+    final CategoriaModel category = event.category;
+    final List<ProductoModel> products = event.products;
+    _mockState = state.copyWith(currentSelectedCategory: category, currentProductsByCategory: products);
+  }
+
+  @override
+  void _setProductsBySearch(SetProductsBySearch event){
+    final String search = event.search;
+    final List<ProductoModel> products = event.products;
+    _mockState = state.copyWith(currentSearch: search, currentProductsBySearch: products);
+  }
+
+  @override
+  ProductsState get state => this._mockState;
 }

@@ -20,13 +20,12 @@ class LugaresBloc extends Bloc<LugaresEvent, LugaresState> {
     switch(event.runtimeType){
       case SetLugares:
         _setLugares(event as SetLugares);
-        yield currentYieldedState;
       break;
       case ResetLugares:
-        _resetLugares();
-        yield currentYieldedState;
+        _resetLugares();   
       break;
     }
+    yield currentYieldedState;
   }
 
   void _setLugares(SetLugares event){

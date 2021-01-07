@@ -1,5 +1,3 @@
-import 'package:fanny_cliente/src/models/lugares_model.dart';
-import 'package:fanny_cliente/src/pages/direccion_create_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fanny_cliente/src/bloc/lugares/lugares_bloc.dart';
@@ -40,7 +38,6 @@ class UserServicesManager {
       _usManager.._appContext = appContext
       .._lugaresServicesManager = LugaresServicesManager(appContext: appContext)
       .._userBloc = BlocProvider.of<UserBloc>(appContext)
-      .._lugaresBloc = BlocProvider.of<LugaresBloc>(appContext)
       .._polygonsBloc = BlocProvider.of<PolygonsBloc>(appContext);
     }
   }
@@ -61,17 +58,13 @@ class UserServicesManager {
       _usManager.._appContext = appContext
       .._lugaresServicesManager = LugaresServicesManager.forTesting(appContext: appContext, userBloc: userBloc, lugaresBloc: lugaresBloc)
       .._userBloc = userBloc
-      .._lugaresBloc = lugaresBloc
       .._polygonsBloc = polygonsBloc;
     }
   }
-
-
   // ****************** Fin del modelo Singleton
 
   BuildContext _appContext;
   UserBloc _userBloc;
-  LugaresBloc _lugaresBloc;
   PolygonsBloc _polygonsBloc;
   LugaresServicesManager _lugaresServicesManager;
   //TODO: Cambiar por el nuevo formato de bloc
@@ -94,21 +87,20 @@ class UserServicesManager {
         'email':email,
         'password':password
       };
-      final Map<String, dynamic> loginResponse = await _executeLogin(loginBody);
-      await _initUserInformation();  
+      await _executeLogin(loginBody);
+      await _getUserInformation();  
       await _doPostLoginConfiguration(loginBody);
     }on ServiceStatusErr catch(err){
-
+      print(err);
     }catch(err){
-
+      print(err);
     }
   }
 
-  Future<Map<String, dynamic>> _executeLogin(Map<String, dynamic> loginBody)async{
+  Future<void> _executeLogin(Map<String, dynamic> loginBody)async{
     Map<String, dynamic> loginResponse = await userService.login(loginBody);
     final String authorizationToken = loginResponse['token'];
     _addAuthorizationTokenToBloc(authorizationToken);
-    return loginResponse;
   }
 
   void _addAuthorizationTokenToBloc(String authorizationToken){
@@ -116,19 +108,15 @@ class UserServicesManager {
     _userBloc.add(setAuthTokenEvent);
   }
 
-  Future<void> _initUserInformation()async{
-    final UsuarioModel user = await _getUserInformation();
-    final SetUserInformation userInformationEvent = SetUserInformation(user: user);
-    _userBloc.add(userInformationEvent);
-  }
-
   Future<void> _doPostLoginConfiguration(Map<String, dynamic> loginBody)async{
-    final UserState userState = _userBloc.state;
-    if(userState.userInformation.phoneVerify){
+    if(_userBloc.state.userInformation.phoneVerify){
+      //TODO: Implementar el proceso de pedidos validations
       await _doCurrentNewPedidoValidations();
       await _lugaresServicesManager.loadLugares();
       _addPolygons();
-      await _doMobileTokenValidations(loginBody);
+      await _doMobileTokenConfiguration(loginBody);
+      await _doPostLoginInitializations(loginBody);
+      Navigator.pushReplacementNamed(_appContext, HomePage.route);
     } 
     else
       Navigator.pushNamed(_appContext, PasosConfirmacionCelularPage.route);
@@ -142,29 +130,26 @@ class UserServicesManager {
     _polygonsBloc.add(AddPolygons(polygons: tiendaPolygons.tiendaPolygons));
   }
 
-  Future<void> _doMobileTokenValidations(Map<String, dynamic> loginBody)async{
+  Future<void> _doMobileTokenConfiguration(Map<String, dynamic> loginBody)async{
     final String newMobileToken = await PushNotificationsProvider.getMobileToken();
     final String mobileToken = _userBloc.state.userInformation.mobileToken;
     if(newMobileToken != mobileToken){
-      Map<String, dynamic> mobileResponse = await updateMobileToken(newMobileToken);
+      await updateMobileToken(newMobileToken);
       _lugaresServicesManager.validarSiHayDirecciones();
-      await _doPostLoginInitializations(loginBody);
-    }else{
-      await _doPostLoginInitializations(loginBody);       
     }
   }
 
   Future<void> _doPostLoginInitializations(Map<String, dynamic> loginBody)async{
     await _lugaresServicesManager.validateCurrentNewCacheLugar();
+    //TODO: Reemplazar la línea de abajo
     //await _pedidosBloc.cargarPedidosAnterioresPorClienteOTienda(_userBloc.state.authorizationToken, 'cliente', null);
     sharedPreferencesUtils.normalLogin(loginBody['email'], loginBody['password']);  
     navigationUtils.reiniciarIndex();
-    Navigator.pushReplacementNamed(_appContext, HomePage.route);
   }
 
   Future<Map<String, dynamic>> updateMobileToken(String newMobileToken)async{
     final int userId = _userBloc.state.userInformation.id;
-    final Map<String, dynamic> headers = _createAuthorizationTokenHeader();
+    final Map<String, String> headers = _createAuthorizationTokenHeader();
     Map<String, dynamic> body = {
       'mobile_token':newMobileToken,
       'user_id':userId
@@ -176,18 +161,16 @@ class UserServicesManager {
 
   Future<UsuarioModel> _getUserInformation()async{
     try{
-      Map<String, dynamic> headers = _createAuthorizationTokenHeader();
+      Map<String, String> headers = _createAuthorizationTokenHeader();
       Map<String, dynamic> response = await userService.getUserInformation(headers);
-
-      final UsuarioModel user = UsuarioModel.fromJsonMap(response['user']);
+      final UsuarioModel user = UsuarioModel.fromJsonMap(response['data']);
       final SetUserInformation setUserInformationEvent = SetUserInformation(user: user);
       _userBloc.add(setUserInformationEvent);
       return user;
-      
     }on ServiceStatusErr catch(err){
-
+      print(err);
     }catch(err){
-
+      print(err);
     }
     return null; 
   }
@@ -210,8 +193,15 @@ class UserServicesManager {
   }
 
   Future<void> logOut(String authorizationToken)async{
-    final serviceBody = {'token':authorizationToken};
-    Map<String, dynamic> response = await userService.logout(serviceBody);
+    try{
+      final serviceBody = {'token':authorizationToken};
+      await userService.logout(serviceBody);
+      _userBloc.add(Logout());
+    }on ServiceStatusErr catch(err){
+      print(err);
+    }catch(err){
+      print(err);      
+    }
     /*
     if(response['status']=='ok'){
       this.usuario = null;
@@ -220,7 +210,7 @@ class UserServicesManager {
     */
   }
 
-  Map<String, dynamic> _createAuthorizationTokenHeader(){
+  Map<String, String> _createAuthorizationTokenHeader(){
     final String authorizationToken = _userBloc.state.authorizationToken;
     return {
       'Authorization':'Bearer $authorizationToken'
@@ -237,10 +227,6 @@ class UserServicesManager {
   //*********************************************************** */
   //    For testing
   //********************************************************** */
-
-  void _assertUpdateMobileToken(){
-    
-  }
 }
 
 final UserServicesManager userServicesManager = UserServicesManager();

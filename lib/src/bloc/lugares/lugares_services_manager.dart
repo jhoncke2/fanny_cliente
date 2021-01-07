@@ -1,9 +1,8 @@
 import 'dart:math';
-
-import 'package:fanny_cliente/src/bloc/assertions_for_blocs/lugares_services_manager_assertions.dart';
-import 'package:fanny_cliente/src/pages/direccion_create_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fanny_cliente/src/bloc/assertions_for_blocs/lugares_services_manager_assertions.dart';
+import 'package:fanny_cliente/src/pages/direccion_create_page.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:fanny_cliente/src/errors/services/service_status_err.dart';
 import 'package:fanny_cliente/src/models/lugares_model.dart';
@@ -52,10 +51,9 @@ class LugaresServicesManager{
       .._asserter = LugaresServicesManagerAssertions(lugaresBloc: _lSManager._lugaresBloc);
     }
   }
-
   // ************** fin de diseño Singleton
-  LugaresServicesManagerAssertions _asserter;
 
+  LugaresServicesManagerAssertions _asserter;
   BuildContext _appContext;
   LugaresBloc _lugaresBloc;
   UserBloc _userBloc;

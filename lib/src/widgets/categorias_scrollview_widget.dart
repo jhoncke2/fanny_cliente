@@ -63,8 +63,7 @@ class _CategoriasScrollviewWidgetState extends State<CategoriasScrollviewWidget>
     );
   }
 
-  Widget _crearListView(){
-    
+  Widget _crearListView(){  
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: productosBloc.categoriasStream,
       builder: (context, snapshot) {

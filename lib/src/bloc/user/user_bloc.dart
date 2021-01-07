@@ -20,17 +20,15 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     switch(event.runtimeType){
       case SetAuthorizationToken:
         _setAuthorizationToken(event as SetAuthorizationToken);
-        yield currentYieldedState;
       break;
       case SetUserInformation:
         _setUserInformation(event as SetUserInformation);
-        yield currentYieldedState;
       break;
       case Logout:
-        _logout();
-        yield currentYieldedState;
+        _logout();      
       break;
     }
+    yield currentYieldedState;
   }
 
   void _setAuthorizationToken(SetAuthorizationToken event){
